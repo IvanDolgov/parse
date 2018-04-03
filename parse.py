@@ -33,22 +33,22 @@ def start_menu(message):
         button_parse = types.KeyboardButton(text="Подгрузить новые данные с сайта")
         last_parse = types.KeyboardButton(text="Последние загрузки")
         button_showdoc = types.KeyboardButton(text="Показать мои св-ва")
-        button_changenumber = types.KeyboardButton(text="Ввести данные св-ва о рождении")
+        #button_changenumber = types.KeyboardButton(text="Ввести данные св-ва о рождении")
         keyboard.row(button_check)
         keyboard.row(button_masscheck)
         keyboard.row(button_parse)
         keyboard.row(last_parse)
         keyboard.row(button_showdoc)
-        keyboard.row(button_changenumber)
+        #keyboard.row(button_changenumber)
         bot.send_message(message.chat.id, 'Выберите пункт меню: ', reply_markup=keyboard)
     else:
         keyboard = types.ReplyKeyboardMarkup(True,False)
         button_geo = types.KeyboardButton(text="Проверить мое свидетельство")
         button_showdoc = types.KeyboardButton(text="Показать мои св-ва")
-        button_changenumber = types.KeyboardButton(text="Ввести данные св-ва о рождении")
+        #button_changenumber = types.KeyboardButton(text="Ввести данные св-ва о рождении")
         keyboard.row(button_geo)
         keyboard.row(button_showdoc)
-        keyboard.row(button_changenumber)
+        #keyboard.row(button_changenumber)
         bot.send_message(message.chat.id, 'Выберите пункт меню: ', reply_markup=keyboard)
 
 
@@ -83,7 +83,7 @@ def addnumber(message):
     cur.execute(sql1, (message.chat.id, ser, numb))
     cur.close()
     db.close()
-    start_menu(message)
+    showmedocuments(message)
 
 
 def addusersdb(message):
@@ -137,16 +137,23 @@ def showmedocuments(message):
     keyboard = telebot.types.InlineKeyboardMarkup()
     for row in cur:
         button = types.InlineKeyboardButton(text=row['ser'] + " № " + row['numb'],callback_data="test"+row['ser']+row['numb'])
-        keyboard.add(button)
+        button2= types.InlineKeyboardButton(text="Х", callback_data="clear_one "+row['ser']+" "+row['numb'])
+        keyboard.add(button,button2)
+    button_changenumber = types.InlineKeyboardButton(text="Ввести данные св-ва о рождении",callback_data="add_document")
     button_clear = types.InlineKeyboardButton(text="Очистить список", callback_data="clear_list")
+    button_back = types.InlineKeyboardButton(text="Назад в главное", callback_data="back")
+    keyboard.add(button_changenumber)
     keyboard.add(button_clear)
+    keyboard.add(button_back)
     bot.send_message(message.chat.id, "Ваши св-ва", reply_markup=keyboard)
     cur.close()
     db.close()
 
+
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
     if call.message:
+        # Очистка списка всех свидеельств
         if call.data == "clear_list":
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Все св-ва удалены")
             db = pymysql.connect(host=config.mysql_host, user=config.mysql_user, password=config.mysql_password, db=config.mysql_db, cursorclass=pymysql.cursors.DictCursor, charset='utf8', use_unicode=True, autocommit=True)
@@ -159,11 +166,32 @@ def callback_inline(call):
             db.commit()
             cur.close()
             db.close()
+            showmedocuments(call.message)
+        #удаление выбранного свидетельства
+        if "clear_one" in call.data:
+            element=call.data.split(' ')
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Свидетельство удалено")
+            db = pymysql.connect(host=config.mysql_host, user=config.mysql_user, password=config.mysql_password,db=config.mysql_db, cursorclass=pymysql.cursors.DictCursor, charset='utf8',
+                                 use_unicode=True, autocommit=True)
+            cur = db.cursor(pymysql.cursors.DictCursor)
+            sql = "DELETE FROM documents WHERE ser='" + str(element[1])+"' and numb='"+str(element[2]+"'")
+            try:
+                cur.execute(sql)
+            except NameError:
+                print('error')
+            db.commit()
+            cur.close()
+            db.close()
+            showmedocuments(call.message)
+        # добавление свидетельства
+        if "add_document" in call.data:
+            zaprosnumber(call.message)
+        if "back" in call.data:
+            start_menu(call.message)
         if "test" in call.data:
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Функцонала нет еще")
-    start_menu(call.message)
-    cur.close()
-    db.close()
+
+
 
 @bot.message_handler(func=lambda message: message.text == 'Ввести данные св-ва о рождении' and message.content_type == 'text')
 def zaprosnumber(message):

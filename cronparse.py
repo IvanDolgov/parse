@@ -43,7 +43,7 @@ for page in range(int(max)+1, int(max)+30):
 db.commit()
 cur0.close()
 #добавть в таблицу, чтоб потом можно было узнавать сколько в день добавило св-тв
-print("Парсинг закончен. Добавлено "+str(k)+" новых записей")
+#print("Парсинг закончен. Добавлено "+str(k)+" новых записей")
 cur2 = db.cursor(pymysql.cursors.DictCursor)
 sql2 = """INSERT INTO `parseevent` (`amount`,`eventtime`) VALUES (%s,%s)"""
 eventtime = datetime.now()
