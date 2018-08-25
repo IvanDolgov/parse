@@ -18,7 +18,6 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-
 @bot.message_handler(commands=['start'])
 def start(message):
     checkusersdb(message)
