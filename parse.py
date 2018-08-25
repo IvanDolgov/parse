@@ -8,9 +8,10 @@ import pymysql
 import telebot
 from telebot import types
 from datetime import datetime,timedelta
+from telebot import apihelper
 
 bot = telebot.TeleBot(config.token)
-
+apihelper.proxy = {  'https': 'socks5://{}:{}@{}:{}'.format(config.user_s,config.pass_s,config.ip_s,config.port_s)}
 
 #не понял зачем, но команды не принимает бот без нее. Проблемы с юникодом
 import sys
